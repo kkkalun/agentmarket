@@ -1,0 +1,319 @@
+<!-- Dashboard Settings Content (included in dashboard/index.html) -->
+<div x-data="settingsForm()">
+    <h1 class="text-xl font-bold text-gray-900 dark:text-white mb-6">账户设置</h1>
+
+    <!-- Profile Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">个人信息</h2>
+
+        <!-- Avatar -->
+        <div class="flex items-center gap-6 mb-6">
+            <div class="relative">
+                <img :src="avatarPreview || '{{ current_user.avatar_url or '/static/img/default-avatar.png' }}'"
+                     alt="头像"
+                     class="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700">
+                <label class="absolute -bottom-1 -right-1 p-1.5 bg-primary-600 rounded-full text-white cursor-pointer hover:bg-primary-700 transition-colors shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <input type="file" accept="image/*" class="hidden" @change="previewAvatar($event)">
+                </label>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">更换头像</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">支持 JPG、PNG 格式，最大 2MB</p>
+            </div>
+        </div>
+
+        <!-- Form Fields -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">显示名称</label>
+                <input type="text"
+                       x-model="profile.displayName"
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500"
+                       placeholder="你的显示名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">用户名</label>
+                <input type="text"
+                       x-model="profile.username"
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500"
+                       placeholder="用户名">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">邮箱地址</label>
+                <input type="email"
+                       x-model="profile.email"
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500"
+                       placeholder="your@email.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">个人简介</label>
+                <input type="text"
+                       x-model="profile.bio"
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500"
+                       placeholder="一句话介绍自己">
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button @click="saveProfile()"
+                    :disabled="saving"
+                    class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+                <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span x-text="saving ? '保存中...' : '保存修改'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Security Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">安全设置</h2>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">当前密码</label>
+                <input type="password"
+                       x-model="security.currentPassword"
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                       placeholder="输入当前密码">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">新密码</label>
+                    <input type="password"
+                           x-model="security.newPassword"
+                           class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           placeholder="输入新密码">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">确认新密码</label>
+                    <input type="password"
+                           x-model="security.confirmPassword"
+                           class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           placeholder="再次输入新密码">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button @click="changePassword()"
+                    :disabled="!security.currentPassword || !security.newPassword"
+                    class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors">
+                修改密码
+            </button>
+        </div>
+    </div>
+
+    <!-- Connected Accounts Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">关联账户</h2>
+
+        <div class="space-y-4">
+            <!-- GitHub -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8 text-gray-900 dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">GitHub</p>
+                        {% if current_user.github_connected %}
+                        <p class="text-xs text-green-600 dark:text-green-400">已连接 - {{ current_user.github_username }}</p>
+                        {% else %}
+                        <p class="text-xs text-gray-500 dark:text-gray-400">未连接</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if current_user.github_connected %}
+                <button class="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    取消关联
+                </button>
+                {% else %}
+                <a href="/api/v1/auth/github/login" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                    连接
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Preferences -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">通知设置</h2>
+
+        <div class="space-y-4">
+            <label class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">邮件通知</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">接收平台更新和推荐邮件</p>
+                </div>
+                <div class="relative">
+                    <input type="checkbox" x-model="notifications.email" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:ring-4 peer-focus:ring-primary-100 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                </div>
+            </label>
+            <label class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">部署通知</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Agent 部署状态变更时通知</p>
+                </div>
+                <div class="relative">
+                    <input type="checkbox" x-model="notifications.deploy" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:ring-4 peer-focus:ring-primary-100 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                </div>
+            </label>
+            <label class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">评价回复通知</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">有人回复你的评价时通知</p>
+                </div>
+                <div class="relative">
+                    <input type="checkbox" x-model="notifications.reviewReply" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:ring-4 peer-focus:ring-primary-100 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-red-200 dark:border-red-800 p-6">
+        <h2 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">危险操作</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">删除账户后，所有数据将被永久清除且无法恢复。请谨慎操作。</p>
+        <button @click="confirmDelete = true"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+            删除账户
+        </button>
+
+        <!-- Delete Confirmation Modal -->
+        <div x-show="confirmDelete"
+             x-transition
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+             @click.self="confirmDelete = false"
+             style="display: none;">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">确认删除账户？</h3>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">此操作不可撤销。你的所有数据，包括个人信息、收藏、部署记录和评价都将被永久删除。</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">输入 "DELETE" 确认删除</label>
+                    <input type="text" x-model="deleteConfirmation" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="输入 DELETE">
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button @click="confirmDelete = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">取消</button>
+                    <button @click="deleteAccount()"
+                            :disabled="deleteConfirmation !== 'DELETE'"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function settingsForm() {
+    return {
+        avatarPreview: null,
+        saving: false,
+        confirmDelete: false,
+        deleteConfirmation: '',
+        profile: {
+            displayName: '{{ current_user.display_name }}',
+            username: '{{ current_user.username }}',
+            email: '{{ current_user.email }}',
+            bio: '{{ current_user.bio or "" }}'
+        },
+        security: {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        },
+        notifications: {
+            email: true,
+            deploy: true,
+            reviewReply: true
+        },
+
+        previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('文件大小不能超过 2MB', 'error');
+                    return;
+                }
+                this.avatarPreview = URL.createObjectURL(file);
+            }
+        },
+
+        async saveProfile() {
+            this.saving = true;
+            try {
+                const res = await fetch('/api/v1/users/me', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(this.profile)
+                });
+                if (res.ok) showToast('个人信息已保存', 'success');
+                else showToast('保存失败', 'error');
+            } catch (err) {
+                showToast('网络错误', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async changePassword() {
+            if (this.security.newPassword !== this.security.confirmPassword) {
+                showToast('两次输入的密码不一致', 'error');
+                return;
+            }
+            if (this.security.newPassword.length < 8) {
+                showToast('密码至少 8 个字符', 'error');
+                return;
+            }
+            try {
+                const res = await fetch('/api/v1/users/me/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        current_password: this.security.currentPassword,
+                        new_password: this.security.newPassword
+                    })
+                });
+                if (res.ok) {
+                    showToast('密码已修改', 'success');
+                    this.security = { currentPassword: '', newPassword: '', confirmPassword: '' };
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '修改失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        },
+
+        async deleteAccount() {
+            if (this.deleteConfirmation !== 'DELETE') return;
+            try {
+                const res = await fetch('/api/v1/users/me', {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    showToast('删除失败，请稍后重试', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+    };
+}
+</script>

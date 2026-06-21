@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}注册{% endblock %}
+{% block meta_description %}注册 AgentMarket 账户，开始探索和使用 AI Agent 模板。{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-12rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex items-center gap-2 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">创建账户</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">加入 AgentMarket，开启 AI Agent 之旅</p>
+        </div>
+
+        <!-- Register Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-8"
+             x-data="registerForm()">
+            <!-- GitHub OAuth -->
+            <a href="/api/v1/auth/github/login"
+               class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white rounded-xl transition-colors font-medium text-sm mb-6">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                使用 GitHub 注册
+            </a>
+
+            <!-- Divider -->
+            <div class="relative mb-6">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200 dark:border-gray-700"></div></div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">或使用邮箱注册</span>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div x-show="errorMessage" x-transition class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p class="text-sm text-red-600 dark:text-red-400" x-text="errorMessage"></p>
+            </div>
+
+            <!-- Register Form -->
+            <form @submit.prevent="handleRegister()" class="space-y-5">
+                <!-- Username -->
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        用户名
+                    </label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           x-model="username"
+                           required
+                           minlength="3"
+                           maxlength="30"
+                           placeholder="输入用户名（3-30个字符）"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                           :class="errors.username ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'">
+                    <p x-show="errors.username" class="text-xs text-red-500 mt-1" x-text="errors.username"></p>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="reg-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        邮箱地址
+                    </label>
+                    <input type="email"
+                           id="reg-email"
+                           name="email"
+                           x-model="email"
+                           required
+                           placeholder="your@email.com"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                           :class="errors.email ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'">
+                    <p x-show="errors.email" class="text-xs text-red-500 mt-1" x-text="errors.email"></p>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="reg-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        密码
+                    </label>
+                    <div class="relative">
+                        <input :type="showPassword ? 'text' : 'password'"
+                               id="reg-password"
+                               name="password"
+                               x-model="password"
+                               required
+                               minlength="8"
+                               placeholder="至少 8 个字符"
+                               class="w-full px-4 py-3 pr-11 bg-gray-50 dark:bg-gray-700 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                               :class="errors.password ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'"
+                               @input="checkPasswordStrength()">
+                        <button type="button"
+                                @click="showPassword = !showPassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        </button>
+                    </div>
+                    <!-- Password Strength Indicator -->
+                    <div class="mt-2" x-show="password.length > 0">
+                        <div class="flex gap-1 mb-1">
+                            <div class="h-1.5 flex-1 rounded-full transition-colors" :class="passwordStrength >= 1 ? strengthColors[passwordStrength] : 'bg-gray-200 dark:bg-gray-700'"></div>
+                            <div class="h-1.5 flex-1 rounded-full transition-colors" :class="passwordStrength >= 2 ? strengthColors[passwordStrength] : 'bg-gray-200 dark:bg-gray-700'"></div>
+                            <div class="h-1.5 flex-1 rounded-full transition-colors" :class="passwordStrength >= 3 ? strengthColors[passwordStrength] : 'bg-gray-200 dark:bg-gray-700'"></div>
+                            <div class="h-1.5 flex-1 rounded-full transition-colors" :class="passwordStrength >= 4 ? strengthColors[passwordStrength] : 'bg-gray-200 dark:bg-gray-700'"></div>
+                        </div>
+                        <p class="text-xs" :class="strengthTextClasses[passwordStrength]" x-text="strengthTexts[passwordStrength]"></p>
+                    </div>
+                    <p x-show="errors.password" class="text-xs text-red-500 mt-1" x-text="errors.password"></p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        确认密码
+                    </label>
+                    <input :type="showPassword ? 'text' : 'password'"
+                           id="confirm-password"
+                           name="confirm_password"
+                           x-model="confirmPassword"
+                           required
+                           placeholder="再次输入密码"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                           :class="errors.confirmPassword ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'">
+                    <p x-show="errors.confirmPassword" class="text-xs text-red-500 mt-1" x-text="errors.confirmPassword"></p>
+                </div>
+
+                <!-- Terms Agreement -->
+                <div>
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox"
+                               name="agree_terms"
+                               x-model="agreeTerms"
+                               class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 mt-0.5">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                            我已阅读并同意
+                            <a href="/terms" class="text-primary-600 dark:text-primary-400 hover:underline">服务条款</a>
+                            和
+                            <a href="/privacy" class="text-primary-600 dark:text-primary-400 hover:underline">隐私政策</a>
+                        </span>
+                    </label>
+                    <p x-show="errors.agreeTerms" class="text-xs text-red-500 mt-1" x-text="errors.agreeTerms"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                        :disabled="loading"
+                        class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-semibold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <svg x-show="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span x-text="loading ? '注册中...' : '创建账户'"></span>
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+                已有账户？
+                <a href="/login" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">立即登录</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function registerForm() {
+    return {
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        agreeTerms: false,
+        showPassword: false,
+        loading: false,
+        errorMessage: '',
+        errors: {},
+        passwordStrength: 0,
+        strengthColors: ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-400'],
+        strengthTexts: ['太短', '弱', '一般', '强', '很强'],
+        strengthTextClasses: ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500', 'text-green-600'],
+
+        checkPasswordStrength() {
+            let strength = 0;
+            if (this.password.length >= 8) strength++;
+            if (/[A-Z]/.test(this.password) && /[a-z]/.test(this.password)) strength++;
+            if (/\d/.test(this.password)) strength++;
+            if (/[^A-Za-z0-9]/.test(this.password)) strength++;
+            this.passwordStrength = strength;
+        },
+
+        validate() {
+            this.errors = {};
+            if (!this.username) this.errors.username = '请输入用户名';
+            else if (this.username.length < 3) this.errors.username = '用户名至少 3 个字符';
+            else if (this.username.length > 30) this.errors.username = '用户名不能超过 30 个字符';
+            else if (!/^[a-zA-Z0-9_-]+$/.test(this.username)) this.errors.username = '用户名只能包含字母、数字、下划线和连字符';
+
+            if (!this.email) this.errors.email = '请输入邮箱地址';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) this.errors.email = '请输入有效的邮箱地址';
+
+            if (!this.password) this.errors.password = '请输入密码';
+            else if (this.password.length < 8) this.errors.password = '密码至少 8 个字符';
+
+            if (!this.confirmPassword) this.errors.confirmPassword = '请确认密码';
+            else if (this.password !== this.confirmPassword) this.errors.confirmPassword = '两次输入的密码不一致';
+
+            if (!this.agreeTerms) this.errors.agreeTerms = '请同意服务条款和隐私政策';
+
+            return Object.keys(this.errors).length === 0;
+        },
+
+        async handleRegister() {
+            this.errorMessage = '';
+            if (!this.validate()) return;
+
+            this.loading = true;
+            try {
+                const response = await fetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: this.username,
+                        email: this.email,
+                        password: this.password
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    // 将 JWT 令牌存入 cookie
+                    const tokens = data.data;
+                    document.cookie = `access_token=${tokens.access_token}; path=/; max-age=3600; SameSite=Lax`;
+                    document.cookie = `refresh_token=${tokens.refresh_token}; path=/; max-age=86400; SameSite=Lax`;
+                    showToast('注册成功！正在跳转...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 800);
+                } else {
+                    this.errorMessage = data.message || '注册失败，请稍后重试';
+                }
+            } catch (err) {
+                this.errorMessage = '网络错误，请稍后重试';
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block title %}{{ agent.name }}{% endblock %}
+{% block meta_description %}{{ agent.description }}{% endblock %}
+
+{% block head %}
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "{{ agent.name }}",
+    "description": "{{ agent.description }}",
+    "applicationCategory": "AI Agent Template",
+    "author": { "@type": "Person", "name": "{{ agent.author_name }}" },
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ agent.stats.rating or 0 }}",
+        "ratingCount": "{{ agent.stats.reviews_count or 0 }}"
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="agentDetail()">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="面包屑导航">
+        <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">首页</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="/explore" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">探索</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="/explore?category={{ agent.category_name }}" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{{ agent.category_name }}</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white font-medium truncate">{{ agent.name }}</span>
+    </nav>
+
+    <!-- Two Column Layout -->
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Left: Main Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Cover Image -->
+            <div class="relative aspect-video rounded-2xl overflow-hidden mb-6 border border-gray-200 dark:border-gray-700">
+                {% if agent.cover_image %}
+                <img src="{{ agent.cover_image }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full bg-gradient-to-br from-primary-400 to-indigo-600 flex items-center justify-center">
+                    <svg class="w-24 h-24 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Agent Name & Description -->
+            <div class="mb-6">
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ agent.name }}</h1>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Author -->
+                            <div class="flex items-center gap-2">
+                                <img src="{{ agent.author_avatar or '/static/img/default-avatar.png' }}" alt="{{ agent.author_name }}" class="w-6 h-6 rounded-full object-cover">
+                                <a href="/users/{{ agent.author_id }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">{{ agent.author_name }}</a>
+                            </div>
+                            <span class="text-gray-300 dark:text-gray-600">|</span>
+                            <!-- Last Updated -->
+                            <span class="text-sm text-gray-500 dark:text-gray-400">更新于 {{ agent.updated_at }}</span>
+                        </div>
+                    </div>
+                    <!-- Favorite Button -->
+                    <button @click="toggleFavorite()"
+                            :class="isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-400'"
+                            class="shrink-0 p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            title="收藏">
+                        <svg class="w-5 h-5" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {{ agent.description }}
+                </p>
+            </div>
+
+            <!-- Tags -->
+            {% if agent.tags %}
+            <div class="flex flex-wrap gap-2 mb-8">
+                {% for tag in agent.tags %}
+                <a href="/explore?q={{ tag }}" class="inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    #{{ tag }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Tabs: README / Reviews / Versions -->
+            <div class="border-b border-gray-200 dark:border-gray-700 mb-6" x-data="{ activeTab: 'readme' }">
+                <div class="flex gap-6">
+                    <button @click="activeTab = 'readme'"
+                            :class="activeTab === 'readme' ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="pb-3 text-sm font-medium border-b-2 transition-colors">
+                        文档说明
+                    </button>
+                    <button @click="activeTab = 'reviews'"
+                            :class="activeTab === 'reviews' ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="pb-3 text-sm font-medium border-b-2 transition-colors">
+                        用户评价
+                        <span class="ml-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">{{ agent.stats.reviews_count or 0 }}</span>
+                    </button>
+                    <button @click="activeTab = 'versions'"
+                            :class="activeTab === 'versions' ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="pb-3 text-sm font-medium border-b-2 transition-colors">
+                        版本记录
+                    </button>
+                </div>
+
+                <!-- README Tab -->
+                <div x-show="activeTab === 'readme'" class="py-6">
+                    <div class="prose dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 dark:prose-pre:bg-gray-800">
+                        {% if agent.readme_html %}
+                            {{ agent.readme_html | safe }}
+                        {% else %}
+                            <!-- Placeholder README -->
+                            <h2>{{ agent.name }} 使用说明</h2>
+                            <p>这是一个高质量的 AI Agent 模板，可以帮助你快速构建和部署 AI Agent 应用。</p>
+                            <h3>功能特点</h3>
+                            <ul>
+                                <li>开箱即用的 Agent 模板</li>
+                                <li>支持多种部署方式</li>
+                                <li>完善的文档和示例</li>
+                                <li>活跃的社区支持</li>
+                            </ul>
+                            <h3>快速开始</h3>
+                            <pre><code>pip install agentmarket
+agentmarket deploy {{ agent.id }}</code></pre>
+                            <h3>配置说明</h3>
+                            <p>详细配置请参考 <a href="/docs">开发文档</a>。</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div x-show="activeTab === 'reviews'" class="py-6">
+                    <!-- Write Review (for logged-in users who haven't reviewed) -->
+                    {% if current_user %}
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-8 border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">撰写评价</h3>
+                        <form hx-post="/api/v1/agents/{{ agent.id }}/reviews"
+                              hx-target="#reviews-list"
+                              hx-swap="afterbegin"
+                              @submit.prevent="submitReview($event)">
+                            <!-- Star Rating -->
+                            <div class="flex items-center gap-1 mb-4">
+                                <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">评分：</span>
+                                <template x-for="star in 5" :key="star">
+                                    <button type="button"
+                                            @click="reviewRating = star"
+                                            @mouseenter="hoverRating = star"
+                                            @mouseleave="hoverRating = 0"
+                                            class="p-0.5 transition-colors">
+                                        <svg class="w-6 h-6"
+                                             :class="(hoverRating || reviewRating) >= star ? 'text-amber-400' : 'text-gray-300 dark:text-gray-600'"
+                                             fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                    </button>
+                                </template>
+                            </div>
+                            <textarea name="content"
+                                      rows="3"
+                                      placeholder="分享你对这个 Agent 模板的使用体验..."
+                                      class="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+                                      required></textarea>
+                            <div class="flex justify-end mt-3">
+                                <button type="submit"
+                                        :disabled="reviewRating === 0"
+                                        class="px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors">
+                                    提交评价
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Reviews List -->
+                    <div id="reviews-list" class="space-y-6">
+                        {% for review in reviews %}
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-0">
+                            <div class="flex items-start gap-3">
+                                <img src="{{ review.author_avatar or '/static/img/default-avatar.png' }}" alt="{{ review.author_name }}" class="w-10 h-10 rounded-full object-cover">
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-gray-900 dark:text-white text-sm">{{ review.author_name }}</span>
+                                            <div class="flex items-center gap-0.5">
+                                                {% for i in range(5) %}
+                                                <svg class="w-3.5 h-3.5 {% if i < review.rating %}text-amber-400{% else %}text-gray-300 dark:text-gray-600{% endif %}" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </svg>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ review.created_at }}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{{ review.content }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Sample reviews as placeholder -->
+                        {% if not reviews %}
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600"></div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-gray-900 dark:text-white text-sm">李明</span>
+                                            <div class="flex items-center gap-0.5">
+                                                {% for i in range(5) %}<svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">2024-12-15</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">非常好用的 Agent 模板，文档清晰，部署简单。在我们的客服场景中效果很好，响应速度提升了 40%。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-gray-900 dark:text-white text-sm">张婷</span>
+                                            <div class="flex items-center gap-0.5">
+                                                {% for i in range(4) %}<svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}
+                                                <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">2024-12-10</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">整体不错，配置灵活。希望能增加更多的自定义选项，特别是在对话流管理方面。</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Versions Tab -->
+                <div x-show="activeTab === 'versions'" class="py-6">
+                    <div class="space-y-4">
+                        {% for version in agent.versions %}
+                        <div class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="px-2.5 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-mono font-medium rounded-md">
+                                v{{ version.version }}
+                            </span>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-white font-medium">{{ version.title }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ version.description }}</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">{{ version.created_at }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <!-- Placeholder versions -->
+                        <div class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="px-2.5 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-mono font-medium rounded-md">v1.2.0</span>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-white font-medium">新增多轮对话管理</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">支持上下文窗口管理和对话历史回溯功能。</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">2024-12-01</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="px-2.5 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-mono font-medium rounded-md">v1.1.0</span>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-white font-medium">性能优化</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">优化了推理速度，降低了内存占用。</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">2024-11-15</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-mono font-medium rounded-md">v1.0.0</span>
+                            <div>
+                                <p class="text-sm text-gray-900 dark:text-white font-medium">首次发布</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">初始版本，包含核心 Agent 功能。</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">2024-10-20</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="lg:w-80 shrink-0">
+            <div class="sticky top-24 space-y-6">
+                <!-- Deploy Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+                    <!-- Deploy Button -->
+                    <button class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors shadow-sm mb-4 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        立即部署
+                    </button>
+
+                    <!-- Install Command -->
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-4">
+                        <div class="flex items-center justify-between">
+                            <code class="text-sm text-gray-700 dark:text-gray-300 font-mono">pip install {{ agent.package_name or 'agent-' + agent.id|string }}</code>
+                            <button onclick="copyToClipboard('pip install {{ agent.package_name or 'agent-' + agent.id|string }}')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" title="复制">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Info -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">定价模式</span>
+                            {% if agent.pricing_model == 'free' %}
+                            <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">免费</span>
+                            {% elif agent.pricing_model == 'freemium' %}
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">免费增值</span>
+                            {% else %}
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ agent.price_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                            <div class="text-lg font-bold text-gray-900 dark:text-white">{{ agent.stats.stars or 0 }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">收藏</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                            <div class="text-lg font-bold text-gray-900 dark:text-white">{{ agent.stats.deployments or 0 }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">部署</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                            <div class="flex items-center justify-center gap-0.5">
+                                <span class="text-lg font-bold text-gray-900 dark:text-white">{{ agent.stats.rating or '0.0' }}</span>
+                                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">评分</div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">许可证</span>
+                            <span class="text-gray-900 dark:text-white font-medium">{{ agent.license or 'MIT' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">版本</span>
+                            <span class="text-gray-900 dark:text-white font-medium">v{{ agent.latest_version or '1.0.0' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">部署方式</span>
+                            <span class="text-gray-900 dark:text-white font-medium">{{ agent.deploy_types_display or 'API, Docker' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">创建时间</span>
+                            <span class="text-gray-900 dark:text-white font-medium">{{ agent.created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Author Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">关于作者</h3>
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="{{ agent.author_avatar or '/static/img/default-avatar.png' }}" alt="{{ agent.author_name }}" class="w-12 h-12 rounded-full object-cover">
+                        <div>
+                            <a href="/users/{{ agent.author_id }}" class="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{{ agent.author_name }}</a>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ agent.author_bio or 'AI Agent 开发者' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{{ agent.author_agents_count or 5 }} 个模板</span>
+                        <span>{{ agent.author_total_deployments or 1200 }} 次部署</span>
+                    </div>
+                </div>
+
+                <!-- Related Agents -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">相关模板</h3>
+                    <div class="space-y-3">
+                        {% for related in related_agents[:4] %}
+                        <a href="/agents/{{ related.id }}" class="flex items-center gap-3 group">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 shrink-0"></div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">{{ related.name }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ related.description }}</p>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        <!-- Placeholder related agents -->
+                        <a href="/agents/smart-reply" class="flex items-center gap-3 group">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 shrink-0"></div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">智能回复助手</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">自动生成个性化回复</p>
+                            </div>
+                        </a>
+                        <a href="/agents/sentiment" class="flex items-center gap-3 group">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 to-green-600 shrink-0"></div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">情感分析引擎</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">多维度文本情感识别</p>
+                            </div>
+                        </a>
+                        <a href="/agents/translate" class="flex items-center gap-3 group">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 shrink-0"></div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">AI 翻译官</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">支持 50+ 语言实时翻译</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function agentDetail() {
+    return {
+        isFavorite: false,
+        reviewRating: 0,
+        hoverRating: 0,
+
+        toggleFavorite() {
+            this.isFavorite = !this.isFavorite;
+            const agentId = '{{ agent.id }}';
+            const method = this.isFavorite ? 'POST' : 'DELETE';
+            fetch(`/api/v1/agents/${agentId}/favorite`, { method: method, credentials: 'include' })
+                .then(res => {
+                    if (!res.ok) {
+                        this.isFavorite = !this.isFavorite;
+                        showToast('请先登录', 'error');
+                    } else {
+                        showToast(this.isFavorite ? '已添加到收藏' : '已从收藏中移除', 'success');
+                    }
+                });
+        },
+
+        submitReview(event) {
+            if (this.reviewRating === 0) {
+                showToast('请选择评分', 'error');
+                return;
+            }
+            // Let HTMX handle the form submission
+        }
+    };
+}
+</script>
+{% endblock %}

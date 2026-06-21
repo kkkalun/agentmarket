@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="adminUsers()">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <a href="/admin" class="hover:text-primary-600 dark:hover:text-primary-400">管理后台</a>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span class="text-gray-900 dark:text-white">用户管理</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">用户管理</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                导出 CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Bar + Role Filter -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <div class="relative flex-1 max-w-md">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text"
+                   x-model="searchQuery"
+                   @input.debounce.300ms="loadUsers()"
+                   placeholder="搜索用户名、邮箱..."
+                   class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400 dark:placeholder-gray-500">
+        </div>
+        <select x-model="roleFilter"
+                @change="loadUsers()"
+                class="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300">
+            <option value="">全部角色</option>
+            <option value="user">普通用户</option>
+            <option value="developer">开发者</option>
+            <option value="admin">管理员</option>
+        </select>
+        <select x-model="statusFilter"
+                @change="loadUsers()"
+                class="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300">
+            <option value="">全部状态</option>
+            <option value="active">正常</option>
+            <option value="inactive">未激活</option>
+            <option value="suspended">已封禁</option>
+        </select>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">用户</th>
+                        <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">邮箱</th>
+                        <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">角色</th>
+                        <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">状态</th>
+                        <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">注册时间</th>
+                        <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <!-- Admin User -->
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-red-600 shrink-0 flex items-center justify-center text-white font-bold text-sm">管</div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">admin</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">系统管理员</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">admin@example.com</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-medium rounded-md">管理员</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                正常
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">2024-01-01</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-sm text-gray-400 cursor-not-allowed" disabled>不可操作</button>
+                        </td>
+                    </tr>
+
+                    <!-- Regular Users -->
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shrink-0 flex items-center justify-center text-white font-bold text-sm">张</div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">张明</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: usr_001</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">zhangming@example.com</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-md">开发者</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                正常
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">2024-06-15</td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="openEditModal('usr_001', '张明', 'zhangming@example.com', 'developer', 'active')"
+                                    class="text-sm text-primary-600 dark:text-primary-400 hover:underline">编辑</button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 shrink-0 flex items-center justify-center text-white font-bold text-sm">李</div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">李华</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: usr_002</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">lihua@example.com</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md">用户</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                正常
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">2024-08-22</td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="openEditModal('usr_002', '李华', 'lihua@example.com', 'user', 'active')"
+                                    class="text-sm text-primary-600 dark:text-primary-400 hover:underline">编辑</button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shrink-0 flex items-center justify-center text-white font-bold text-sm">王</div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">王强</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: usr_003</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">wangqiang@example.com</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-md">开发者</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-medium rounded-full">
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                已封禁
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">2024-03-10</td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="openEditModal('usr_003', '王强', 'wangqiang@example.com', 'developer', 'suspended')"
+                                    class="text-sm text-primary-600 dark:text-primary-400 hover:underline">编辑</button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 shrink-0 flex items-center justify-center text-white font-bold text-sm">赵</div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">赵丽</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: usr_004</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">zhaoli@example.com</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md">用户</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium rounded-full">
+                                <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                                未激活
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">2024-12-01</td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="openEditModal('usr_004', '赵丽', 'zhaoli@example.com', 'user', 'inactive')"
+                                    class="text-sm text-primary-600 dark:text-primary-400 hover:underline">编辑</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <p class="text-sm text-gray-500 dark:text-gray-400">显示第 1-20 条，共 2,458 条</p>
+            <div class="flex items-center gap-1">
+                <button class="px-3 py-1.5 text-sm text-gray-400 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg cursor-not-allowed">上一页</button>
+                <button class="px-3 py-1.5 text-sm text-white bg-primary-600 rounded-lg">1</button>
+                <button class="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">2</button>
+                <button class="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">3</button>
+                <span class="px-2 text-gray-400">...</span>
+                <button class="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div x-show="showEditModal"
+         x-transition
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+         @click.self="showEditModal = false"
+         style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">编辑用户</h3>
+
+            <!-- User Info -->
+            <div class="flex items-center gap-3 mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 shrink-0 flex items-center justify-center text-white font-bold text-sm" x-text="editingUser.name ? editingUser.name[0] : ''"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="editingUser.name"></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="editingUser.email"></p>
+                </div>
+            </div>
+
+            <!-- Role -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">角色</label>
+                <select x-model="editingUser.role" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300">
+                    <option value="user">普通用户</option>
+                    <option value="developer">开发者</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">状态</label>
+                <select x-model="editingUser.status" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300">
+                    <option value="active">正常</option>
+                    <option value="inactive">未激活</option>
+                    <option value="suspended">已封禁</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button @click="showEditModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">取消</button>
+                <button @click="saveUser()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">保存修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function adminUsers() {
+    return {
+        searchQuery: '',
+        roleFilter: '',
+        statusFilter: '',
+        showEditModal: false,
+        editingUser: { id: '', name: '', email: '', role: '', status: '' },
+
+        loadUsers() {
+            console.log('Loading users...', this.searchQuery, this.roleFilter, this.statusFilter);
+        },
+
+        openEditModal(id, name, email, role, status) {
+            this.editingUser = { id, name, email, role, status };
+            this.showEditModal = true;
+        },
+
+        saveUser() {
+            fetch(`/api/v1/admin/users/${this.editingUser.id}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: this.editingUser.role,
+                    status: this.editingUser.status
+                })
+            }).then(res => {
+                if (res.ok) {
+                    showToast('用户信息已更新', 'success');
+                    this.showEditModal = false;
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('更新失败', 'error');
+                }
+            });
+        }
+    };
+}
+</script>
+{% endblock %}

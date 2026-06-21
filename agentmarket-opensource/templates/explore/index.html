@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}探索 Agent 模板{% endblock %}
+{% block meta_description %}浏览和搜索数千个 AI Agent 模板，按分类、价格和部署方式筛选。{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">探索 Agent 模板</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">发现适合你项目的 AI Agent 模板</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-8" x-data="{ query: '{{ request.query_params.get("q", "") }}' }">
+        <div class="relative max-w-2xl">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text"
+                   x-model="query"
+                   placeholder="搜索 Agent 模板名称、描述或关键词..."
+                   class="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                   hx-get="/api/v1/agents/search"
+                   hx-trigger="input changed delay:300ms"
+                   hx-target="#results"
+                   hx-include="[name='category'],[name='pricing'],[name='deploy_type'],[name='sort']"
+                   name="q">
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Left Sidebar: Filters -->
+        <aside class="lg:w-64 shrink-0" x-data="{ showMobileFilters: false }">
+            <!-- Mobile Filter Toggle -->
+            <button @click="showMobileFilters = !showMobileFilters"
+                    class="lg:hidden flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                筛选条件
+            </button>
+
+            <div :class="showMobileFilters ? 'block' : 'hidden'" class="lg:block">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-6 sticky top-24">
+                    <!-- Categories Filter -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">分类</h3>
+                        <div class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="radio" name="category" value="" checked
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='pricing'],[name='deploy_type'],[name='sort']"
+                                       class="text-primary-600 focus:ring-primary-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">全部分类</span>
+                            </label>
+                            {% set filter_categories = [
+                                '智能客服', '内容创作', '代码开发', '数据分析', '教育学习',
+                                '营销推广', '办公效率', '设计创意', '科研学术', '医疗健康',
+                                '金融财务', '电商零售', '社交媒体', '翻译工具', '法律咨询'
+                            ] %}
+                            {% for cat in filter_categories %}
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="radio" name="category" value="{{ cat }}"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='pricing'],[name='deploy_type'],[name='sort']"
+                                       class="text-primary-600 focus:ring-primary-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ cat }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Pricing Model Filter -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">定价模式</h3>
+                        <div class="space-y-1">
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="pricing" value="free"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='deploy_type'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">免费</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="pricing" value="freemium"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='deploy_type'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">免费增值</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="pricing" value="paid"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='deploy_type'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">付费</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Deploy Type Filter -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">部署方式</h3>
+                        <div class="space-y-1">
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="deploy_type" value="api"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='pricing'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">API 调用</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="deploy_type" value="docker"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='pricing'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Docker 部署</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="deploy_type" value="cloud"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='pricing'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">云端托管</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="deploy_type" value="local"
+                                       hx-get="/api/v1/agents/search"
+                                       hx-trigger="change"
+                                       hx-target="#results"
+                                       hx-include="[name='q'],[name='category'],[name='pricing'],[name='sort']"
+                                       class="rounded text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">本地部署</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">排序方式</h3>
+                        <select name="sort"
+                                hx-get="/api/v1/agents/search"
+                                hx-trigger="change"
+                                hx-target="#results"
+                                hx-include="[name='q'],[name='category'],[name='pricing'],[name='deploy_type']"
+                                class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300">
+                            <option value="relevance">相关性</option>
+                            <option value="latest">最新发布</option>
+                            <option value="stars">最多收藏</option>
+                            <option value="deployments">最多部署</option>
+                            <option value="rating">最高评分</option>
+                        </select>
+                    </div>
+
+                    <!-- Reset Filters -->
+                    <button onclick="resetFilters()" class="w-full px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        重置筛选
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content: Results -->
+        <div class="flex-1 min-w-0">
+            <!-- Results Header -->
+            <div class="flex items-center justify-between mb-4">
+                <p id="results-count" class="text-sm text-gray-500 dark:text-gray-400">
+                    正在加载结果...
+                </p>
+                <div class="flex items-center gap-2">
+                    <button id="view-grid" class="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400" title="网格视图">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    </button>
+                    <button id="view-list" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="列表视图">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent Results Grid -->
+            <div id="results"
+                 hx-get="/api/v1/agents/search{% if request.query_params %}?{{ request.query_params }}{% endif %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Loading State -->
+                {% for i in range(6) %}
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
+                    <div class="aspect-video bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="p-4 space-y-3">
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                        <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="flex justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="mt-8">
+                {% include "partials/pagination.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetFilters() {
+    document.querySelectorAll('[name="category"]')[0].checked = true;
+    document.querySelectorAll('[name="pricing"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('[name="deploy_type"]').forEach(cb => cb.checked = false);
+    document.querySelector('[name="sort"]').value = 'relevance';
+    htmx.trigger('[name="category"]:checked', 'change');
+}
+</script>
+{% endblock %}
